@@ -48,7 +48,12 @@ public class PlayerCam : MonoBehaviour
     {
         if (charController.isGrounded)
         {
-            currentMovement.y = -0.5f;
+            // Prevent clipping through floor
+            if (currentMovement.y < 0)
+            {
+                currentMovement.y = -2f;
+            }
+
             if (pih.JumpInput)
             {
                 currentMovement.y = jumpPower;
@@ -57,20 +62,43 @@ public class PlayerCam : MonoBehaviour
         else
         {
             currentMovement.y += Physics.gravity.y * gravityMultiplier * Time.deltaTime;
+            currentMovement.y = Mathf.Max(currentMovement.y, -20f);
         }
     }
 
     private void MovementHandler()
     {
-        Vector3 worldDirection = CalcWorldDirection();
+        Vector3 horizontalMovement = CalcWorldDirection() * currentSpeed;
         
         // Forward/backward movement
-        currentMovement.x = worldDirection.x * currentSpeed;
+        currentMovement.x = horizontalMovement.x;
         // Strafe movement
-        currentMovement.z = worldDirection.z * currentSpeed;   
+        currentMovement.z = horizontalMovement.z;
 
-        JumpHandler();
+        //JumpHandler();
+
+        // Vertical movement
+        if (charController.isGrounded)
+        {
+            // Prevent clipping through floor
+            if (currentMovement.y < 0)
+            {
+                currentMovement.y = -2f;
+            }
+
+            if (pih.JumpInput)
+            {
+                currentMovement.y = jumpPower;
+            }
+        }
+        else
+        {
+            currentMovement.y += Physics.gravity.y * gravityMultiplier * Time.deltaTime;
+            currentMovement.y = Mathf.Max(currentMovement.y, -20f);
+        }
+
         charController.Move(currentMovement * Time.deltaTime);
+        Debug.Log("Current Movement Y: " + currentMovement.y);
     }
 
     private void HorizontalRotation(float rotationValue)

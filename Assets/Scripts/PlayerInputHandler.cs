@@ -13,17 +13,20 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string rotation = "Rotation";
     [SerializeField] private string jump = "Jump";
     [SerializeField] private string sprint = "Sprint";
+    [SerializeField] private string shoot = "Shoot";
 
     private InputAction movementAction;
     private InputAction rotationAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
+    private InputAction shootAction;
 
     // Holds inputs passed in
     public Vector2 MovementInput { get; private set; }
     public Vector2 RotationInput { get; private set; }
     public bool JumpInput { get; private set; }
     public bool SprintInput { get; private set; }
+    public bool ShootInput { get; private set; }
 
     void Awake()
     {
@@ -33,6 +36,7 @@ public class PlayerInputHandler : MonoBehaviour
         rotationAction = mapReference.FindAction(rotation);
         jumpAction = mapReference.FindAction(jump);
         sprintAction = mapReference.FindAction(sprint);
+        shootAction = mapReference.FindAction(shoot);
 
         SubActionToInput();
     }
@@ -51,6 +55,9 @@ public class PlayerInputHandler : MonoBehaviour
 
         sprintAction.performed += inputInfo => SprintInput = true;
         sprintAction.canceled += inputInfo => SprintInput = false;
+
+        shootAction.performed += inputInfo => ShootInput = true;
+        shootAction.canceled += inputInfo => ShootInput = false;
     }
 
     // Ensure player controls don't work if script is disabled
