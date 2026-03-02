@@ -12,7 +12,7 @@ public class Gun : MonoBehaviour
     [SerializeField] private Vector3 BulletSpreadVariance = new Vector3( 0f, 0f, 0f );
     [SerializeField] private ParticleSystem ShootingSystem;
     [SerializeField] private Transform BulletOrigin;
-    [SerializeField] private ParticleSystem ImpactParticleSystem;
+    [SerializeField] private GameObject ImpactParticleSystem;
     [SerializeField] private TrailRenderer BulletTrail;
     [SerializeField] private float ShootDelay;
     [SerializeField] private float BulletSpeed;
@@ -29,22 +29,31 @@ public class Gun : MonoBehaviour
             gunController.SetBool("Shooting", true);
             ShootingSystem.Play();
 
-            Vector3 direction = GetDirection();
-
-            if (Physics.Raycast(BulletOrigin.position, direction, out RaycastHit hit, float.MaxValue, Mask))
+            for (int i = 0; i < NumBulletsPerShot; i++)
             {
-                TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
+                Vector3 direction = GetDirection();
 
-                // Coroutine allows multi-frame sequencing for animating bullet tracer
-                StartCoroutine(SpawnTrail(trail, hit.point, hit.normal, true));
+                if (Physics.Raycast(BulletOrigin.position, direction, out RaycastHit hit, float.MaxValue, Mask))
+                {
+
+                    TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
+
+                    GameObject impact = Instantiate(ImpactParticleSystem, hit.point, Quaternion.LookRotation(hit.normal));
+
+                    Destroy(impact, 1);
+
+                    // Coroutine allows multi-frame sequencing for animating bullet tracer
+                    StartCoroutine(SpawnTrail(trail, hit.point, hit.normal, true));
+                    Destroy(trail.gameObject, 2);
+                }
+                else
+                {
+                    TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
+
+                    StartCoroutine(SpawnTrail(trail, GetDirection() * 100, Vector3.zero, false));
+                    Destroy(trail.gameObject, 2);
+                }
             }
-            else
-            {
-                TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
-
-                StartCoroutine(SpawnTrail(trail, GetDirection() * 100, Vector3.zero, false));
-            }
-
             lastShootTime = Time.time;
         }
     }
@@ -83,11 +92,12 @@ public class Gun : MonoBehaviour
         Trail.transform.position = HitPoint;
 
         // Only play bullet impact when bullet made impact
-        if (MadeImpact)
-        {
-            Instantiate(ImpactParticleSystem, HitPoint, Quaternion.LookRotation(HitNormal));
-        }
-        
+        //if (MadeImpact)
+        //{
+        //    GameObject impact = Instantiate(ImpactParticleSystem, HitPoint, Quaternion.LookRotation(HitNormal));
+
+        //    Destroy(impact, 1);
+        //}
 
         Destroy(Trail.gameObject, Trail.time);
     }
