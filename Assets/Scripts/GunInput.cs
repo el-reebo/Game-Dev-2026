@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Code taken from Youtube tutorial https://www.youtube.com/watch?v=cI3E7_f74MA
+// Code taken from Youtube video https://www.youtube.com/watch?v=cI3E7_f74MA
 public class GunInput : MonoBehaviour
 {
     [SerializeField] private Gun gun;
