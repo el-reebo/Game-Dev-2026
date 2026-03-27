@@ -10,6 +10,8 @@ public class Gun : MonoBehaviour
     [Header("Gun Settings")]
     [SerializeField] private int NumBulletsPerShot = 1;
     [SerializeField] private Vector3 BulletSpreadVariance = new Vector3( 0f, 0f, 0f );
+    [SerializeField] private float VerticalBulletAngle = 0f;
+    [SerializeField] private float HorizontalBulletAngle = 0f;
     [SerializeField] private ParticleSystem ShootingSystem;
     [SerializeField] private Transform BulletOrigin;
     [SerializeField] private GameObject ImpactParticleSystem;
@@ -60,8 +62,14 @@ public class Gun : MonoBehaviour
 
     private Vector3 GetDirection()
     {
+        // Set shoot direction to gun blue axis direction
         Vector3 direction = transform.forward;
 
+        // Apply bullet angle adjustments
+        direction = Quaternion.AngleAxis(VerticalBulletAngle, transform.right) *
+                    Quaternion.AngleAxis(HorizontalBulletAngle, transform.up) * direction;
+
+        // Apply random bullet spread
         direction += new Vector3(
             Random.Range(-BulletSpreadVariance.x, BulletSpreadVariance.x),
             Random.Range(-BulletSpreadVariance.y, BulletSpreadVariance.y),
