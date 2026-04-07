@@ -58,6 +58,9 @@ public class VoiceDetection : MonoBehaviour
     {
         if (Time.time > lastVoiceCall + voiceCallDelay)
         {
+            if (monsterAudio.isPlaying) // Prevent overlapping sounds
+                return;
+
             monsterAudio.PlayOneShot(monsterRoar, 1.0f);
             lastVoiceCall = Time.time;
             Debug.Log("Charlie function played");
