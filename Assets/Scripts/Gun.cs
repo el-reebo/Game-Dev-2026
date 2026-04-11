@@ -21,7 +21,26 @@ public class Gun : MonoBehaviour
     [SerializeField] private LayerMask Mask; // Where bullets can hit
 
     [SerializeField] private Animator gunController;
+
+    [Header("Sound Settings")]
+    [SerializeField] private AudioClip ShootSFX = null;
+    [SerializeField] private float SoundRange = 200f;
+    private AudioSource GunAudioSource;
+
     private float lastShootTime;
+
+    void Start()
+    {
+        GunAudioSource = GetComponent<AudioSource>();
+    }
+
+    private void PlayShootAudio()
+    {
+        GunAudioSource.PlayOneShot(ShootSFX, 0.8f);
+
+        var sound = new Sound(transform.position, SoundRange);
+        Sounds.MakeSound(sound);
+    }
 
     public void Shoot()
     {
@@ -30,6 +49,8 @@ public class Gun : MonoBehaviour
             //Debug.Log("Shooting Now");
             gunController.SetBool("Shooting", true);
             ShootingSystem.Play();
+
+            PlayShootAudio();
 
             for (int i = 0; i < NumBulletsPerShot; i++)
             {

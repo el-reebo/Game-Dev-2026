@@ -120,7 +120,7 @@ public class MonsterAIController : MonoBehaviour, IHear
 
         if (Time.time < StationTime)
         {
-            Debug.Log($"Staying stationary for: {StationTime - Time.time}");
+            //Debug.Log($"Staying stationary for: {StationTime - Time.time}");
             m_Agent.speed = 0f;
             return;
         }
@@ -163,7 +163,7 @@ public class MonsterAIController : MonoBehaviour, IHear
             }
 
             // Set target
-            Debug.Log($"Valid NavMesh point found: {hit.position}");
+            //Debug.Log($"Valid NavMesh point found: {hit.position}");
             Target.position = hit.position;
             ReachedTarget = false;
             LastPatrolTime = Time.time;
@@ -176,6 +176,6 @@ public class MonsterAIController : MonoBehaviour, IHear
 
     public void RespondToSound(Sound sound)
     {
-
+        print("Sound heard");
     }
 }
