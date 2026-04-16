@@ -41,6 +41,10 @@ public class MonsterAIController : MonoBehaviour, IHear
     private float LastPatrolTime = 0;
     private float StationTime = 0;
     
+    public void RespondToSound(Sound sound)
+    {
+        Debug.Log("I HEARD THAT!!!!");
+    }
 
     private void Awake()
     {
@@ -172,10 +176,5 @@ public class MonsterAIController : MonoBehaviour, IHear
             float StationDuration = Random.Range(MinStationaryTime, MaxStationaryTime);
             StationTime = Time.time + StationDuration;
         }
-    }
-
-    public void RespondToSound(Sound sound)
-    {
-        print("Sound heard");
     }
 }
