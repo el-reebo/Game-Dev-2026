@@ -12,7 +12,7 @@ enum MonsterState
 public class MonsterAIController : MonoBehaviour, IHear
 {
     [Header("References")]
-    public Transform PlayerPosition;
+    public Transform Player;
 
     [Header("Settings")]
     public float AttackDistance;
@@ -24,15 +24,28 @@ public class MonsterAIController : MonoBehaviour, IHear
     [SerializeField] private float MinEdgeDistance = 0f;
     [SerializeField] private float PatrolTargetTimeout = 4f; // Time until patrol target dismissed
 
+    [Header("Vision Settings")]
+    [SerializeField] private float LOSDistance = 100f;
+    [SerializeField] private float FOV = 180f;
+    public LayerMask ObstacleMask;
+
     [Header("Patrol Settings")]
     [SerializeField] private float MinStationaryTime = 0.5f;
     [SerializeField] private float MaxStationaryTime = 10f;
+
+    [Header("Investigate Settings")]
+    [SerializeField] private float[] SurveyRadius = {4f, 10f, 15f};
+
+    [Header("Chase Settings")]
+    [SerializeField] private float ChaseTimeout = 5f;
     
     private NavMeshAgent m_Agent;
     private Animator m_Animator;
 
     private Transform Target;
+    private float TargetPriority;
     private float DistanceFromPlayer;
+    private float LastSawPlayer = 0;
     private MonsterState _state = MonsterState.Patrolling;
     private bool ReachedTarget = false;
     private float MonsterSpeed = 0f;
@@ -40,11 +53,6 @@ public class MonsterAIController : MonoBehaviour, IHear
     // Patrol variables
     private float LastPatrolTime = 0;
     private float StationTime = 0;
-    
-    public void RespondToSound(Sound sound)
-    {
-        Debug.Log("I HEARD THAT!!!!");
-    }
 
     private void Awake()
     {
@@ -61,18 +69,50 @@ public class MonsterAIController : MonoBehaviour, IHear
         Debug.Log($"Monster Target created at: {Target.position}");
     }
 
+    private void LOSCheck(float DistanceFromPlayer)
+    {
+        // Check if player within LOS range
+        if (DistanceFromPlayer > LOSDistance) return;
+
+        // Check if player within vision angle
+
+        Vector3 Origin = transform.position + Vector3.up * 3f;
+        Vector3 PlayerDirection = (Player.position + (Vector3.up * 0f) - Origin).normalized;
+        if (Physics.Raycast(Origin, PlayerDirection, out RaycastHit hit, LOSDistance, ObstacleMask))
+        {
+            Debug.DrawLine(Origin, hit.point, Color.red);
+            Debug.Log("Hit: " + hit.transform.name);
+            if(hit.transform == Player)
+            {
+                Debug.Log("Player seen");
+                LastSawPlayer = Time.time;
+                _state = MonsterState.Chasing;
+            }
+        }
+    }
+
     private void Update()
     {
         //Debug.Log($"Monster Current State: {_state}");
 
-        DistanceFromPlayer = Vector3.Distance(m_Agent.transform.position, PlayerPosition.position);
+        DistanceFromPlayer = Vector3.Distance(m_Agent.transform.position, Player.position);
 
         switch(_state)
         {
             case MonsterState.Patrolling:
+                TargetPriority = 0;
                 Patrol();
                 break;
+            case MonsterState.Investigating:
+                Investigate();
+                break;
+            case MonsterState.Chasing:
+                Chase();
+                break;
         }
+
+        // if see player: set _state to chase, make player target, timeout chase if haven't seen player for a duration of time 
+        LOSCheck(DistanceFromPlayer);
 
         if (Vector3.Distance(transform.position, Target.position) < 0.5f)
         {
@@ -96,6 +136,20 @@ public class MonsterAIController : MonoBehaviour, IHear
         m_Animator.SetFloat("Speed", m_Agent.velocity.magnitude);
     }
 
+    public void RespondToSound(Sound sound)
+    {
+        // Debug.Log("I HEARD THAT!!!!");
+
+        _state = MonsterState.Investigating;
+
+        if (sound.priority > TargetPriority)
+        {
+            Target.position = sound.pos;
+            Debug.Log("Target to sound set");
+        }
+        
+    }
+
 // --- Patrolling ---
     private bool IsValidPatrolPoint(Vector3 position, out NavMeshHit hit)
     {
@@ -116,6 +170,7 @@ public class MonsterAIController : MonoBehaviour, IHear
 
     private void Patrol()
     {
+        // Debug.Log("Patrol called");
         if (Target == null) 
         { 
             Debug.LogError("Monster Target is NULL"); 
@@ -176,5 +231,40 @@ public class MonsterAIController : MonoBehaviour, IHear
             float StationDuration = Random.Range(MinStationaryTime, MaxStationaryTime);
             StationTime = Time.time + StationDuration;
         }
+    }
+
+    // --- Investigating ---
+    private void Investigate()
+    {
+        // Debug.Log("Investigate function called");
+        if (Target == null) 
+        { 
+            Debug.LogError("Monster Target is NULL"); 
+            return; 
+        }
+
+        // Set speed
+
+        if (ReachedTarget)
+        {
+            // survey growing area nearby
+
+            
+        }
+
+    }
+
+    // --- Chase ---
+    private void Chase()
+    {
+        Debug.Log("Chase called");
+        
+        if((Time.time - LastSawPlayer) < ChaseTimeout)
+        {
+            _state = MonsterState.Investigating;
+            return;
+        }
+
+        Target.position = Player.position;
     }
 }

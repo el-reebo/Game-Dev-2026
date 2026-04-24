@@ -38,8 +38,29 @@ public class Gun : MonoBehaviour
     {
         GunAudioSource.PlayOneShot(ShootSFX, 0.8f);
 
-        var sound = new Sound(transform.position, SoundRange);
+        var sound = new Sound(transform.position, SoundRange, 100);
         Sounds.MakeSound(sound);
+    }
+
+    private Vector3 GetDirection()
+    {
+        // Set shoot direction to gun blue axis direction
+        Vector3 direction = transform.forward;
+
+        // Apply bullet angle adjustments
+        direction = Quaternion.AngleAxis(VerticalBulletAngle, transform.right) *
+                    Quaternion.AngleAxis(HorizontalBulletAngle, transform.up) * direction;
+
+        // Apply random bullet spread
+        direction += new Vector3(
+            Random.Range(-BulletSpreadVariance.x, BulletSpreadVariance.x),
+            Random.Range(-BulletSpreadVariance.y, BulletSpreadVariance.y),
+            Random.Range(-BulletSpreadVariance.z, BulletSpreadVariance.z)
+        );
+
+        direction.Normalize();
+
+        return direction;
     }
 
     public void Shoot()
@@ -79,27 +100,6 @@ public class Gun : MonoBehaviour
             }
             lastShootTime = Time.time;
         }
-    }
-
-    private Vector3 GetDirection()
-    {
-        // Set shoot direction to gun blue axis direction
-        Vector3 direction = transform.forward;
-
-        // Apply bullet angle adjustments
-        direction = Quaternion.AngleAxis(VerticalBulletAngle, transform.right) *
-                    Quaternion.AngleAxis(HorizontalBulletAngle, transform.up) * direction;
-
-        // Apply random bullet spread
-        direction += new Vector3(
-            Random.Range(-BulletSpreadVariance.x, BulletSpreadVariance.x),
-            Random.Range(-BulletSpreadVariance.y, BulletSpreadVariance.y),
-            Random.Range(-BulletSpreadVariance.z, BulletSpreadVariance.z)
-        );
-
-        direction.Normalize();
-
-        return direction;
     }
 
     private IEnumerator SpawnTrail(TrailRenderer Trail, Vector3 HitPoint, Vector3 HitNormal, bool MadeImpact)
