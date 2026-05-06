@@ -51,6 +51,7 @@ public class Gun : MonoBehaviour
         direction = Quaternion.AngleAxis(VerticalBulletAngle, transform.right) *
                     Quaternion.AngleAxis(HorizontalBulletAngle, transform.up) * direction;
 
+
         // Apply random bullet spread
         direction += new Vector3(
             Random.Range(-BulletSpreadVariance.x, BulletSpreadVariance.x),
@@ -77,11 +78,10 @@ public class Gun : MonoBehaviour
             {
                 Vector3 direction = GetDirection();
 
-                if (Physics.Raycast(BulletOrigin.position, direction, out RaycastHit hit, float.MaxValue, Mask))
+                if (Physics.Raycast(BulletOrigin.position, direction, out RaycastHit hit, 1000f, Mask))
                 {
 
                     TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
-
                     GameObject impact = Instantiate(ImpactParticleSystem, hit.point, Quaternion.LookRotation(hit.normal));
 
                     Destroy(impact, 1);
@@ -89,6 +89,15 @@ public class Gun : MonoBehaviour
                     // Coroutine allows multi-frame sequencing for animating bullet tracer
                     StartCoroutine(SpawnTrail(trail, hit.point, hit.normal, true));
                     Destroy(trail.gameObject, 2);
+
+                    // Debug.Log($"Hit obj: {hit.transform.name}");
+
+                    IDamageable obj = hit.transform.gameObject.GetComponentInParent<IDamageable>();
+                    if (obj != null)
+                    {   
+                        Debug.Log("Hit IDamageable obj");
+                        obj.TakeDamage();
+                    }
                 }
                 else
                 {
