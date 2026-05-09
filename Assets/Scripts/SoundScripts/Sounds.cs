@@ -4,9 +4,9 @@ public static class Sounds
 {
     public static void MakeSound(Sound sound)
     {
-        Debug.Log("MakeSound() function called");
+        // Debug.Log("MakeSound() function called");
         Collider[] col = Physics.OverlapSphere(sound.pos, sound.range); // Ensure IHear object has includes atleast 1 non mesh collider
-        Debug.Log($"Sound Position: {sound.pos}");
+        // Debug.Log($"Sound Position: {sound.pos}");
 
         int hearerCheck = 0; // Debug variable
 
@@ -21,6 +21,6 @@ public static class Sounds
             }
         }
                 
-        Debug.Log($"{hearerCheck} hearers were detected");
+        // Debug.Log($"{hearerCheck} hearers were detected");
     }
 }

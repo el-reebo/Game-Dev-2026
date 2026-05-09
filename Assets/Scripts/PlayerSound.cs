@@ -12,9 +12,10 @@ public class PlayerSound : MonoBehaviour
     [SerializeField] private float WalkPriority = 50f;
     [SerializeField] private float RunRadius = 20f;
     [SerializeField] private float RunPriority = 60f;
+    [SerializeField] private float MaxRadius = 200f;
 
     [Header("Microphone Settings")]
-    public int SampleWindow = 64;
+    public int SampleWindow = 128;
     public float Threshold = 0f;
     public float SensitivityMultiplier = 1f;
 
@@ -32,9 +33,9 @@ public class PlayerSound : MonoBehaviour
     void Awake()
     {
         _fpsController = GetComponent<FirstPersonController>();
-        Debug.Log("PlayerSound script");
+        // Debug.Log("PlayerSound script");
 
-        SetMicAudioClip(1);
+        SetMicAudioClip(0);
 
         WalkSpeed = _fpsController.MoveSpeed;
         RunSpeed = _fpsController.SprintSpeed;
@@ -104,14 +105,14 @@ public class PlayerSound : MonoBehaviour
 
         float micVolume = GetVolumeFromMic() * SensitivityMultiplier;
         if (micVolume < Threshold) micVolume = 0;
-        Debug.Log($"Mic Volume: {micVolume}");
+        // Debug.Log($"Mic Volume: {micVolume}");
 
         if (micVolume > currentSoundRadius)
-            currentSoundRadius = micVolume;
+            currentSoundRadius = Mathf.Min(MaxRadius, micVolume);
 
         if (currentSoundRadius > 0f)
         {
-            Debug.Log($"Sound Radius: {currentSoundRadius}");
+            // Debug.Log($"Sound Radius: {currentSoundRadius}");
             Sounds.MakeSound(new Sound(transform.position, currentSoundRadius, SoundPriority));
         }
     }

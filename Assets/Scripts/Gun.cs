@@ -6,6 +6,10 @@ using System.Collections;
 // Code taken and tweaked from Youtube tutorial https://www.youtube.com/watch?v=cI3E7_f74MA
 public class Gun : MonoBehaviour
 {
+    [Header("Gun Attributes")]
+    public int MagSize = 2;
+    public int BulletsInMag = 2;
+    public int ReserveAmount = 0;
 
     [Header("Gun Settings")]
     [SerializeField] private int NumBulletsPerShot = 1;
@@ -18,6 +22,7 @@ public class Gun : MonoBehaviour
     [SerializeField] private TrailRenderer BulletTrail;
     [SerializeField] private float ShootDelay;
     [SerializeField] private float BulletSpeed;
+    [SerializeField] private float ReloadDuration = 3f;
     [SerializeField] private LayerMask Mask; // Where bullets can hit
 
     [SerializeField] private Animator gunController;
@@ -28,10 +33,17 @@ public class Gun : MonoBehaviour
     private AudioSource GunAudioSource;
 
     private float lastShootTime;
+    private bool isReloading = false;
 
     void Start()
     {
         GunAudioSource = GetComponent<AudioSource>();
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, SoundRange);
     }
 
     private void PlayShootAudio()
@@ -64,15 +76,50 @@ public class Gun : MonoBehaviour
         return direction;
     }
 
+    public void Reload()
+    {
+        
+        if (isReloading) return;
+        if (BulletsInMag >= MagSize) return; 
+        if (ReserveAmount == 0) return;
+
+        Debug.Log("Reloading...");
+        StartCoroutine(ReloadCoroutine());
+
+        Debug.Log($"{BulletsInMag} in the chamber");
+    }
+
+    private IEnumerator ReloadCoroutine()
+    {
+        isReloading = true;
+
+        yield return new WaitForSeconds(ReloadDuration);
+
+        while (ReserveAmount > 0 && BulletsInMag < MagSize)
+        {
+            BulletsInMag++;
+            ReserveAmount--;
+        }
+        isReloading = false;
+        Debug.Log("Finished Reloading");
+    }
+
     public void Shoot()
     {
+        if (isReloading) return;
+        if (BulletsInMag <= 0)
+        {
+            Debug.Log("Reload");
+            return;
+        }
+
         if (lastShootTime + ShootDelay < Time.time)
         {
             //Debug.Log("Shooting Now");
             gunController.SetBool("Shooting", true);
             ShootingSystem.Play();
-
             PlayShootAudio();
+            BulletsInMag -= 1;
 
             for (int i = 0; i < NumBulletsPerShot; i++)
             {

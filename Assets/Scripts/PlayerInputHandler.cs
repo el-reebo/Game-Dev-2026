@@ -14,12 +14,14 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string jump = "Jump";
     [SerializeField] private string sprint = "Sprint";
     [SerializeField] private string shoot = "Shoot";
+    [SerializeField] private string reload = "Reload";
 
     private InputAction movementAction;
     private InputAction rotationAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
     private InputAction shootAction;
+    private InputAction reloadAction;
 
     // Holds inputs passed in
     public Vector2 MovementInput { get; private set; }
@@ -27,6 +29,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool JumpInput { get; private set; }
     public bool SprintInput { get; private set; }
     public bool ShootInput { get; private set; }
+    public bool ReloadInput { get; private set; }
 
     void Awake()
     {
@@ -37,6 +40,12 @@ public class PlayerInputHandler : MonoBehaviour
         jumpAction = mapReference.FindAction(jump);
         sprintAction = mapReference.FindAction(sprint);
         shootAction = mapReference.FindAction(shoot);
+        reloadAction = mapReference.FindAction(reload);
+
+        if (reloadAction == null)
+            Debug.LogError("Reload action not found!"); 
+        else
+            Debug.Log("Reload action assigned");
 
         SubActionToInput();
     }
@@ -58,16 +67,25 @@ public class PlayerInputHandler : MonoBehaviour
 
         shootAction.performed += inputInfo => ShootInput = true;
         shootAction.canceled += inputInfo => ShootInput = false;
+
+        reloadAction.performed += inputInfo => 
+        {
+            Debug.Log("Reload key pressed");
+            ReloadInput = true;
+        };
+        reloadAction.canceled += inputInfo => ReloadInput = false;
     }
 
     // Ensure player controls don't work if script is disabled
     private void OnEnable()
     {
-        playerControls.FindActionMap(actionMapName).Enable();
+        // playerControls.FindActionMap(actionMapName).Enable();
+        playerControls.Enable();
     }
     private void OnDisable()
     {
-        playerControls.FindActionMap(actionMapName).Disable();
+        // playerControls.FindActionMap(actionMapName).Disable();
+        playerControls.Disable();
     }
 
 }

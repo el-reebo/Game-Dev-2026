@@ -51,9 +51,10 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     public float WakeUpDuration = 5f;
 
     [Header("Damage Settings")]
-    public float MinStun = 3f;
-    public float MaxStun = 8f;
+    public int NumHealthStates = 1;
+    public float StunDuration = 5f;
     private float EndStunTime;
+    private float LastStunTime;
     private bool IsStunned => Time.time < EndStunTime;
     
 
@@ -104,8 +105,16 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         if (_state == MonsterState.Hiding)
         {
             // Take damage
-            m_Animator.SetTrigger("Damaged");
             m_Animator.SetBool("Hiding", false);
+
+            NumHealthStates -= 1;
+            if (NumHealthStates < 1)
+            {
+                m_Animator.SetTrigger("Killed");
+                return;
+            }
+
+            m_Animator.SetTrigger("Damaged");
 
             AwakenTime = Time.time + WakeUpDuration;
             LastSawPlayer = AwakenTime + AwakenChaseDuration;
@@ -121,7 +130,13 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                 m_Animator.SetTrigger("Damaged");
                 
                 // Cap stun duration to max stun
-                EndStunTime = Mathf.Min(Time.time + MaxStun, EndStunTime + MinStun);
+                if (LastStunTime + StunDuration < Time.time)
+                {
+                    EndStunTime = Time.time + StunDuration;
+                    LastStunTime = Time.time;
+                }
+                Debug.Log($"EndStunTime: {EndStunTime}");
+                Debug.Log($"IsStunned: {IsStunned}");
             }
         }
     }
@@ -146,7 +161,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             // Debug.Log("Hit: " + hit.transform.name);
             if(hit.transform == Player)
             {
-                Debug.Log("Player seen");
+                // Debug.Log("Player seen");
                 LastSawPlayer = Time.time;
                 ReachedTarget = false;
                 _state = MonsterState.Chasing;
@@ -162,11 +177,17 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
 
         if (IsStunned)
         {
+            Debug.Log("Monster is stunned");
             m_Agent.speed = 0f;
             m_Agent.isStopped = true;
             m_Animator.SetFloat("Speed", 0f);
             return;
         }
+
+        if (Time.time < AwakenTime) return;
+
+        m_Agent.speed = MonsterSpeed;
+        m_Agent.isStopped = false;
 
         switch(_state)
         {
@@ -253,7 +274,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         }
 
         float pathDistance = 0;
-        for (int i = 1; i < path.corners.Length - 1; i++)
+        for (int i = 1; i < path.corners.Length; i++)
             pathDistance += Vector3.Distance(path.corners[i-1], path.corners[i]);
         
         return pathDistance;
@@ -361,6 +382,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         SearchRadius = 3f;
         ReachedTarget = false;
         _state = MonsterState.Investigating;
+        Debug.Log($"Investigate Origin: {InvestigateOrigin}");
     }
 
     private void Investigate()
@@ -373,9 +395,11 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             return; 
         }
 
-        if (InvestigateOrigin == null)
+
+
+        if (InvestigateOrigin == Vector3.zero)
         {
-            Debug.LogError("InvestigateOrigin is NULL");
+            Debug.LogError("InvestigateOrigin is zero");
             return;
         }
         
@@ -441,7 +465,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     private void Chase()
     {
         // Pause between hiding state and chase state
-        if (Time.time < AwakenTime) return;
+        // if (Time.time < AwakenTime) return;
 
         float timeSinceLastSeen = Time.time - LastSawPlayer;
 
@@ -455,6 +479,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         // - Search nearby points player could have reached
         if (timeSinceLastSeen < ChaseTimeout)
         {
+            // Debug.Log($"Entered case 1, reached target: {ReachedTarget}");
             if (ReachedTarget)
             {
                 Debug.Log("Case 1 block entered");

@@ -7,6 +7,7 @@ public class GunInput : MonoBehaviour
     [SerializeField] private PlayerInputHandler pih;
 
     private bool lastShootState;
+    private bool lastReloadState;
 
     void Update()
     {
@@ -16,6 +17,12 @@ public class GunInput : MonoBehaviour
             gun.Shoot();
         }
 
+        if (pih.ReloadInput && !lastReloadState)
+        {
+            gun.Reload();
+        }
+
+        lastReloadState = pih.ReloadInput;
         lastShootState = pih.ShootInput;
     }
 }
