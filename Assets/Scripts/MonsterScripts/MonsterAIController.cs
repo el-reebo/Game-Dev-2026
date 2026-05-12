@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections.Generic;
 
-enum MonsterState
+public enum MonsterState
 {
     Hiding,
     Patrolling,
@@ -15,6 +15,10 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     [Header("References")]
     public Transform Player;
     public CharacterController _playerController;
+    public RoundHandler _roundHandler;
+
+    [Header("Current State")]
+    public MonsterState State = MonsterState.Hiding;
 
     [Header("Settings")]
     public float AttackDistance;
@@ -23,7 +27,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     [SerializeField] private float NavMaxRadius = 10f;
     [SerializeField] private float NavMinRadius = 0.5f;
     [SerializeField] private float NavAngle = 45f;
-    [SerializeField] private float MinEdgeDistance = 0f;
+    [SerializeField] private float MinEdgeDistance = 0f; // Closest distance to navmesh edge
     [SerializeField] private float PatrolTargetTimeout = 4f; // Time until patrol target dismissed
 
     [Header("Vision Settings")]
@@ -51,12 +55,16 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     public float WakeUpDuration = 5f;
 
     [Header("Damage Settings")]
-    public int NumHealthStates = 1;
     public float StunDuration = 5f;
     private float EndStunTime;
     private float LastStunTime;
     private bool IsStunned => Time.time < EndStunTime;
-    
+
+    [Header("Public Variables")]
+    public float LastSawPlayer = 0f;
+    public float MonsterSpeed = 0f; // default set to NavAgent speed
+    public bool Killable = false;
+
 
     private NavMeshAgent m_Agent;
     private Animator m_Animator;
@@ -64,10 +72,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     private Transform Target;
     private float TargetPriority;
     private float DistanceFromPlayer;
-    private float LastSawPlayer = 0;
-    private MonsterState _state = MonsterState.Hiding;
     private bool ReachedTarget = false;
-    private float MonsterSpeed = 0f;
 
     // Patrol variables
     private float LastPatrolTime = 0;
@@ -97,19 +102,18 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
 
         Debug.Log($"Monster Target created at: {Target.position}");
 
-        EnterHideState();
+        EnterHiding();
     }
 
     public void TakeDamage()
     {
-        if (_state == MonsterState.Hiding)
+        if (State == MonsterState.Hiding)
         {
             // Take damage
-            m_Animator.SetBool("Hiding", false);
 
-            NumHealthStates -= 1;
-            if (NumHealthStates < 1)
+            if (Killable)
             {
+                m_Animator.SetBool("Hiding", false);
                 m_Animator.SetTrigger("Killed");
                 return;
             }
@@ -118,7 +122,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
 
             AwakenTime = Time.time + WakeUpDuration;
             LastSawPlayer = AwakenTime + AwakenChaseDuration;
-            _state = MonsterState.Chasing;
+            EnterChase();
             Debug.Log("Took hiding damage");
         }
         else 
@@ -164,14 +168,14 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                 // Debug.Log("Player seen");
                 LastSawPlayer = Time.time;
                 ReachedTarget = false;
-                _state = MonsterState.Chasing;
+                State = MonsterState.Chasing;
             }
         }
     }
 
     private void Update()
     {
-        //Debug.Log($"Monster Current State: {_state}");
+        //Debug.Log($"Monster Current State: {state}");
 
         DistanceFromPlayer = Vector3.Distance(m_Agent.transform.position, Player.position);
 
@@ -189,7 +193,16 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         m_Agent.speed = MonsterSpeed;
         m_Agent.isStopped = false;
 
-        switch(_state)
+        if (State != MonsterState.Hiding)
+        {
+            if (Vector3.Distance(m_Agent.transform.position, Target.position) < 0.5f)
+            {
+                Debug.Log("Target reached");
+                ReachedTarget = true;
+            }
+        }
+
+        switch(State)
         {
             case MonsterState.Patrolling:
                 TargetPriority = 0;
@@ -206,15 +219,9 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                 break;
         }
 
-        if (_state != MonsterState.Hiding)
+        if (State != MonsterState.Hiding)
         {
             LOSCheck(DistanceFromPlayer);
-
-            if (Vector3.Distance(transform.position, Target.position) < 0.5f)
-            {
-                // Debug.Log("Target reached");
-                ReachedTarget = true;
-            }
 
             // Attack condition
             if (DistanceFromPlayer < AttackDistance)
@@ -236,9 +243,9 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     public void RespondToSound(Sound sound)
     {
         // Debug.Log("I HEARD THAT!!!!");
-        if (_state == MonsterState.Chasing) return;
+        if (State == MonsterState.Chasing) return;
 
-        if (sound.priority > TargetPriority && _state != MonsterState.Hiding)
+        if (sound.priority > TargetPriority && State != MonsterState.Hiding)
         {
             EnterInvestigate(sound.pos);
             Debug.Log("Target to sound set");
@@ -308,6 +315,10 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     }
 
 // --- Patrolling ---
+    public void EnterPatrol()
+    {
+        State = MonsterState.Patrolling;
+    }
 
     private void Patrol()
     {
@@ -381,7 +392,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         Target.position = Origin;
         SearchRadius = 3f;
         ReachedTarget = false;
-        _state = MonsterState.Investigating;
+        State = MonsterState.Investigating;
         Debug.Log($"Investigate Origin: {InvestigateOrigin}");
     }
 
@@ -419,7 +430,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             // Return back to patrol state
             if (SearchRadius > (MaxSearchRadius))
             {
-                _state = MonsterState.Patrolling;
+                EnterPatrol();
                 Debug.Log("Back to PATROL");
                 return;
             }
@@ -462,6 +473,12 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     }
 
 // --- Chase ---
+    public void EnterChase()
+    {
+        m_Animator.SetBool("Hiding", false);
+        State = MonsterState.Chasing;
+    }
+
     private void Chase()
     {
         // Pause between hiding state and chase state
@@ -477,35 +494,38 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         
         // Case 1 (Chase Search): lost sight of player but within chase timeout
         // - Search nearby points player could have reached
-        if (timeSinceLastSeen < ChaseTimeout)
-        {
-            // Debug.Log($"Entered case 1, reached target: {ReachedTarget}");
-            if (ReachedTarget)
-            {
-                Debug.Log("Case 1 block entered");
+        // if (timeSinceLastSeen < ChaseTimeout)
+        // {
+        //     if (!ReachedTarget)
+        //     {
+        //         return;
+        //     }
 
-                float playerSpeed = _playerController.velocity.magnitude;
-                float maxPossibleDistance = timeSinceLastSeen * playerSpeed;
-                Vector3 searchTarget;
+        //     Debug.Log($"Entered case 1, reached target: {ReachedTarget}");
+            
+        //     float playerSpeed = _playerController.velocity.magnitude;
+        //     float maxPossibleDistance = timeSinceLastSeen * playerSpeed;
+        //     Vector3 searchTarget;
 
-                if (FindReachablePoint(maxPossibleDistance, FOV, out searchTarget))
-                {
-                    Target.position = searchTarget;
-                    ReachedTarget = false;
-                    Debug.Log($"Lost player, searching: {searchTarget}");
-                }
-            }
-            return;
-        }
+        //     if (FindReachablePoint(maxPossibleDistance, FOV, out searchTarget))
+        //     {
+        //         Target.position = searchTarget;
+        //         ReachedTarget = false;
+        //         Debug.Log($"Lost player, searching: {searchTarget}");
+        //     }
+
+        //     return;
+        // }
 
         // Case 2: chase times out
         // - transition to investigate state
-        Debug.Log("Chase timed out. Now investigating");
-        EnterInvestigate(Target.position);
+        // Debug.Log("Chase timed out. Now investigating");
+        // EnterInvestigate(Target.position);
+        EnterPatrol();
     }
 
 // --- Hiding ---
-    private void EnterHideState()
+    public void EnterHiding()
     {
          
         if (HidingPoints.Length == 0)
@@ -540,7 +560,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         m_Agent.isStopped = true;
         m_Animator.SetBool("Hiding", true);
 
-        _state = MonsterState.Hiding;
+        State = MonsterState.Hiding;
     }
 
     private void Hide()

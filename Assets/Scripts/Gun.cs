@@ -1,12 +1,17 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Animator))]
 
 // Code taken and tweaked from Youtube tutorial https://www.youtube.com/watch?v=cI3E7_f74MA
 public class Gun : MonoBehaviour
 {
-    [Header("Gun Attributes")]
+    [Header("UI Text")]
+    public Text ReserveAmmoText;
+    public Text InMagText;
+
+    [Header("Ammo Values")]
     public int MagSize = 2;
     public int BulletsInMag = 2;
     public int ReserveAmount = 0;
@@ -26,6 +31,7 @@ public class Gun : MonoBehaviour
     [SerializeField] private LayerMask Mask; // Where bullets can hit
 
     [SerializeField] private Animator gunController;
+    [SerializeField] private Transform Camera;
 
     [Header("Sound Settings")]
     [SerializeField] private AudioClip ShootSFX = null;
@@ -38,6 +44,8 @@ public class Gun : MonoBehaviour
     void Start()
     {
         GunAudioSource = GetComponent<AudioSource>();
+        ReserveAmmoText.text = string.Format("{0:00}", ReserveAmount);
+        InMagText.text = BulletsInMag.ToString();
     }
 
     private void OnDrawGizmos()
@@ -54,10 +62,10 @@ public class Gun : MonoBehaviour
         Sounds.MakeSound(sound);
     }
 
-    private Vector3 GetDirection()
+    private Vector3 GetDirection(Transform T)
     {
         // Set shoot direction to gun blue axis direction
-        Vector3 direction = transform.forward;
+        Vector3 direction = T.forward;
 
         // Apply bullet angle adjustments
         direction = Quaternion.AngleAxis(VerticalBulletAngle, transform.right) *
@@ -92,6 +100,7 @@ public class Gun : MonoBehaviour
     private IEnumerator ReloadCoroutine()
     {
         isReloading = true;
+        gunController.SetTrigger("Reloading");
 
         yield return new WaitForSeconds(ReloadDuration);
 
@@ -100,6 +109,11 @@ public class Gun : MonoBehaviour
             BulletsInMag++;
             ReserveAmount--;
         }
+
+        // Set UI
+        InMagText.text = BulletsInMag.ToString();
+        ReserveAmmoText.text = string.Format("{0:00}", ReserveAmount);
+
         isReloading = false;
         Debug.Log("Finished Reloading");
     }
@@ -116,27 +130,32 @@ public class Gun : MonoBehaviour
         if (lastShootTime + ShootDelay < Time.time)
         {
             //Debug.Log("Shooting Now");
-            gunController.SetBool("Shooting", true);
+            gunController.SetTrigger("Shooting");
             ShootingSystem.Play();
             PlayShootAudio();
             BulletsInMag -= 1;
 
+            // Update UI
+            InMagText.text = BulletsInMag.ToString();
+
             for (int i = 0; i < NumBulletsPerShot; i++)
             {
-                Vector3 direction = GetDirection();
+                Vector3 direction = GetDirection(transform);
 
-                if (Physics.Raycast(BulletOrigin.position, direction, out RaycastHit hit, 1000f, Mask))
+                if (Physics.Raycast(Camera.position, direction, out RaycastHit hit, 1000f, Mask))
                 {
 
-                    TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
                     GameObject impact = Instantiate(ImpactParticleSystem, hit.point, Quaternion.LookRotation(hit.normal));
 
                     Destroy(impact, 1);
 
                     // Coroutine allows multi-frame sequencing for animating bullet tracer
-                    StartCoroutine(SpawnTrail(trail, hit.point, hit.normal, true));
-                    Destroy(trail.gameObject, 2);
-
+                    if (Vector3.Distance(Camera.position, BulletOrigin.position) < Vector3.Distance(Camera.position, hit.point))
+                    {
+                        TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
+                        StartCoroutine(SpawnTrail(trail, hit.point, hit.normal, true));
+                        Destroy(trail.gameObject, 2);
+                    }
                     // Debug.Log($"Hit obj: {hit.transform.name}");
 
                     IDamageable obj = hit.transform.gameObject.GetComponentInParent<IDamageable>();
@@ -150,7 +169,7 @@ public class Gun : MonoBehaviour
                 {
                     TrailRenderer trail = Instantiate(BulletTrail, BulletOrigin.position, Quaternion.identity);
 
-                    StartCoroutine(SpawnTrail(trail, GetDirection() * 100, Vector3.zero, false));
+                    StartCoroutine(SpawnTrail(trail, GetDirection(transform) * 100, Vector3.zero, false));
                     Destroy(trail.gameObject, 2);
                 }
             }
@@ -173,7 +192,6 @@ public class Gun : MonoBehaviour
 
             yield return null;
         }
-        gunController.SetBool("Shooting", false);
         Trail.transform.position = HitPoint;
 
         // Only play bullet impact when bullet made impact
