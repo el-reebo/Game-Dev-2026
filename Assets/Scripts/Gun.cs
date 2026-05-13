@@ -36,6 +36,9 @@ public class Gun : MonoBehaviour
     [Header("Sound Settings")]
     [SerializeField] private AudioClip ShootSFX = null;
     [SerializeField] private float SoundRange = 200f;
+
+    public event System.Action GunShot;
+
     private AudioSource GunAudioSource;
 
     private float lastShootTime;
@@ -131,6 +134,7 @@ public class Gun : MonoBehaviour
         {
             //Debug.Log("Shooting Now");
             gunController.SetTrigger("Shooting");
+            GunShot?.Invoke(); 
             ShootingSystem.Play();
             PlayShootAudio();
             BulletsInMag -= 1;

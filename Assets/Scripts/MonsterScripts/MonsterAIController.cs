@@ -64,6 +64,8 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     public float LastSawPlayer = 0f;
     public float MonsterSpeed = 0f; // default set to NavAgent speed
     public bool Killable = false;
+    public event System.Action Jumpscare;
+    public Vector3 JumpscareLocation;
 
 
     private NavMeshAgent m_Agent;
@@ -223,11 +225,41 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         {
             LOSCheck(DistanceFromPlayer);
 
-            // Attack condition
+            // Jumpscare condition
             if (DistanceFromPlayer < AttackDistance)
             {
                 m_Agent.isStopped = true;
-                m_Animator.SetBool("Attack", true);
+                m_Agent.speed = 0f;
+                m_Agent.velocity = Vector3.zero;
+                m_Agent.Warp(transform.position);
+                // m_Animator.SetBool("Attack", true);
+                
+                // Find valid jumpscare location that doesn't clip into wall
+                if (JumpscareLocation == Vector3.zero)
+                {
+                    NavMeshHit hit = default;
+                    int attempts = 0;
+
+                    while (attempts < 30)
+                    {
+                        Vector3 samplePos = transform.Find("JumpscarePoint").position;
+                        if (IsValidPatrolPoint(samplePos, out hit))
+                        {
+                            // Run jumpscare
+                            JumpscareLocation = samplePos;
+                            Debug.Log($"Monster jumpscare location: {JumpscareLocation}");
+                            Jumpscare?.Invoke();
+                            m_Animator.SetTrigger("JumpscareTrigger");
+                            break;
+                        }
+                        // Randomly rotate monster
+                        Vector3 randomDir = Random.onUnitSphere;
+                        randomDir.y = 0f;
+                        transform.rotation = Quaternion.LookRotation(randomDir);
+                        attempts++;
+                    }
+                    
+                }
             }
             else
             {

@@ -74,6 +74,11 @@ namespace StarterAssets
 
 		private const float _threshold = 0.01f;
 
+		public void SetPitch(float pitch)
+		{
+			_cinemachineTargetPitch = pitch;
+		}
+
 		private bool IsCurrentDeviceMouse
 		{
 			get

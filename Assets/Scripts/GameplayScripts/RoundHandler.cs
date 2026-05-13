@@ -23,9 +23,15 @@ public class RoundHandler : MonoBehaviour
 
     public Phase CurrentPhase = Phase.Hiding;
 
+    private FadingScript fadingScript;
+
     void Awake()
     {
         Timer.TimerFinished += HandlePhaseEnd;
+
+        fadingScript = GetComponent<FadingScript>();
+
+        fadingScript.FadeIn(1f);
 
         if (MainMonster.State == MonsterState.Hiding)
         {
@@ -71,6 +77,8 @@ public class RoundHandler : MonoBehaviour
 
             MainMonster.EnterHiding();
 
+            fadingScript.FadeOut(1f);
+
             if (Rounds <= 0)
             {
                 MainMonster.Killable = true;
@@ -79,6 +87,8 @@ public class RoundHandler : MonoBehaviour
 
             CurrentPhase = Phase.Hiding;
             Timer.StartTimer(HidingDuration);
+
+            fadingScript.FadeIn(1f);
         }
     }
 

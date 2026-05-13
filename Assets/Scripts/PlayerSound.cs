@@ -12,12 +12,16 @@ public class PlayerSound : MonoBehaviour
     [SerializeField] private float WalkPriority = 50f;
     [SerializeField] private float RunRadius = 20f;
     [SerializeField] private float RunPriority = 60f;
-    [SerializeField] private float MaxRadius = 200f;
+    public float MaxRadius = 200f;
 
     [Header("Microphone Settings")]
+    public int ChosenMic = 0;
     public int SampleWindow = 128;
     public float Threshold = 0f;
     public float SensitivityMultiplier = 1f;
+
+    [Header("Public Variables")]
+    public float CurrentSoundRadius = 0f;
 
     // Gun sound handled in gun script
 
@@ -25,7 +29,6 @@ public class PlayerSound : MonoBehaviour
     private float WalkSpeed;
     private float RunSpeed;
 
-    private float currentSoundRadius = 0f;
     private float SoundPriority = 0f;
     private AudioClip MicrophoneClip;
     private string MicName;
@@ -73,47 +76,47 @@ public class PlayerSound : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (currentSoundRadius > 0f)
+        if (CurrentSoundRadius > 0f)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, currentSoundRadius);
+            Gizmos.DrawWireSphere(transform.position, CurrentSoundRadius);
         }
         
     }
 
     void Update()
     {
-        currentSoundRadius = 0f;
+        CurrentSoundRadius = 0f;
         PlayerSpeed = _playerController.velocity.magnitude;
         // Debug.Log($"Player Speed: {PlayerSpeed}");
 
     // Movement noise
         if (PlayerSpeed > RunSpeed - 0.5f)
         {
-            currentSoundRadius += RunRadius;
+            CurrentSoundRadius += RunRadius;
             SoundPriority += RunPriority;
         }
         else if (PlayerSpeed > WalkSpeed - 0.5f)
         {
-            currentSoundRadius += WalkRadius;
+            CurrentSoundRadius += WalkRadius;
             SoundPriority += WalkPriority;
         }
         else
         {
-            currentSoundRadius = 0f;
+            CurrentSoundRadius = 0f;
         }
 
         float micVolume = GetVolumeFromMic() * SensitivityMultiplier;
         if (micVolume < Threshold) micVolume = 0;
         // Debug.Log($"Mic Volume: {micVolume}");
 
-        if (micVolume > currentSoundRadius)
-            currentSoundRadius = Mathf.Min(MaxRadius, micVolume);
+        if (micVolume > CurrentSoundRadius)
+            CurrentSoundRadius = Mathf.Min(MaxRadius, micVolume);
 
-        if (currentSoundRadius > 0f)
+        if (CurrentSoundRadius > 0f)
         {
-            // Debug.Log($"Sound Radius: {currentSoundRadius}");
-            Sounds.MakeSound(new Sound(transform.position, currentSoundRadius, SoundPriority));
+            // Debug.Log($"Sound Radius: {CurrentSoundRadius}");
+            Sounds.MakeSound(new Sound(transform.position, CurrentSoundRadius, SoundPriority));
         }
     }
 
