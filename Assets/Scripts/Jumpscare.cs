@@ -8,9 +8,11 @@ public class Jumpscare : MonoBehaviour
     public MonsterAIController Monster;
     public Transform JumpscarePoint;
     public Transform MainCamera;
+    public GameOverScreen GameOverScreen;
     public PlayerInputHandler _playerInputHandler;
-    public Canvas _uiCanvas;
+    public GameObject _ui;
     public Camera _itemCamera;
+    public FadingScript _fadingScript;
 
     private CharacterController _characterController;
     private FirstPersonController _firstPersonController;
@@ -31,16 +33,13 @@ public class Jumpscare : MonoBehaviour
         _characterController.enabled = false;
         _firstPersonController.enabled = false;
         _playerInputHandler.enabled = false;
-        _uiCanvas.enabled = false;
+        _ui.SetActive(false);
         _itemCamera.enabled = false;
 
-        Debug.Log("HandleJumpscare called");
+        GameOverScreen.Setup();
+
         // Set player to jumpscare position
         transform.position = JumpscarePoint.position;
-
-        Debug.Log($"JumpscarePoint position: {JumpscarePoint.position}");
-        Debug.Log($"Player position after teleport: {transform.position}");
-
 
         // Set base rotation
         Vector3 rotationDir = Monster.transform.position - transform.position;
@@ -55,9 +54,8 @@ public class Jumpscare : MonoBehaviour
         // _firstPersonController.SetPitch(23f);
 
         // MainCamera.localRotation *= tiltUp;
-        StartCoroutine(ReEnableController());
+        // StartCoroutine(ReEnableController());
     }
-
 
     private IEnumerator ReEnableController()
     {
@@ -65,7 +63,7 @@ public class Jumpscare : MonoBehaviour
         _characterController.enabled = true;
         _firstPersonController.enabled = true;
         _playerInputHandler.enabled = true;
-        _uiCanvas.enabled = true;
+        _ui.SetActive(true);
         _itemCamera.enabled = true;
     }
 }

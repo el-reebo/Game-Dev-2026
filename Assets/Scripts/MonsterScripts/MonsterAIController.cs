@@ -67,10 +67,14 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     public event System.Action Jumpscare;
     public Vector3 JumpscareLocation;
 
+    // Events
+    public event System.Action HidingDamageEvent;
+    public event System.Action MonsterKilled;
 
     private NavMeshAgent m_Agent;
     private Animator m_Animator;
 
+    // Target variables
     private Transform Target;
     private float TargetPriority;
     private float DistanceFromPlayer;
@@ -117,8 +121,11 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             {
                 m_Animator.SetBool("Hiding", false);
                 m_Animator.SetTrigger("Killed");
+                MonsterKilled?.Invoke();
                 return;
             }
+
+            HidingDamageEvent?.Invoke();
 
             m_Animator.SetTrigger("Damaged");
 

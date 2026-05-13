@@ -3,9 +3,12 @@ using UnityEngine.SceneManagement;
 
 public class Menu : MonoBehaviour
 {
-    [SerializeField] private int PlaySceneBuildIndex = 1;
+    public string MainMapName = "MainMap2";
+
     public void Play()
     {
-        SceneManager.LoadSceneAsync(PlaySceneBuildIndex);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        SceneManager.LoadScene(MainMapName);
     }
 }

@@ -15,11 +15,14 @@ public class RoundHandler : MonoBehaviour
     public ClockTimer Timer;
 
     [Header("Game Settings")]
-    public int Rounds = 3; // number of pairs of Hiding + Seeking phases
+    public int MonsterHealth = 3;
     public float HidingDuration = 3f;
     public float SeekingDuration = 3f;
     public float TimeoutChaseDuration = 10f; // chase duration when hiding timer runs out
     public float BoostSpeedMultiplier = 2f;
+
+    [Header("Public Variables")]
+    public int Round = 1; // number of pairs of Hiding + Seeking phases
 
     public Phase CurrentPhase = Phase.Hiding;
 
@@ -28,6 +31,8 @@ public class RoundHandler : MonoBehaviour
     void Awake()
     {
         Timer.TimerFinished += HandlePhaseEnd;
+        MainMonster.HidingDamageEvent += HandleMonsterDamage;
+        MainMonster.MonsterKilled += HandleMonsterKilled;
 
         fadingScript = GetComponent<FadingScript>();
 
@@ -58,11 +63,31 @@ public class RoundHandler : MonoBehaviour
         MainMonster.MonsterSpeed = OriginalSpeed;
     }
 
+    private void HandleMonsterKilled()
+    {
+        Debug.Log("Yay you won");
+    }
+
+    private void HandleMonsterDamage()
+    {
+        Debug.Log($"HandleMonsterDamage called {MonsterHealth}");
+        MonsterHealth --;
+        CurrentPhase = Phase.Seeking;
+
+        if (MonsterHealth <= 1)
+        {
+            MainMonster.Killable = true;
+        }
+
+        Timer.StartTimer(SeekingDuration);
+    }
+
     private void HandlePhaseEnd()
     {
         // Case: hiding phase timer runs out
         if (CurrentPhase == Phase.Hiding)
         {
+            Debug.Log("HandlePhaseEnd (hiding) called");
             CurrentPhase = Phase.Seeking;
             MainMonster.LastSawPlayer = Time.time + TimeoutChaseDuration;
             MainMonster.EnterChase();
@@ -73,17 +98,12 @@ public class RoundHandler : MonoBehaviour
         }
         else
         {
-            Rounds --;
+            Debug.Log("HandlePhase End (seeking) called");
+            Round ++;
 
             MainMonster.EnterHiding();
 
             fadingScript.FadeOut(1f);
-
-            if (Rounds <= 0)
-            {
-                MainMonster.Killable = true;
-                return;
-            }
 
             CurrentPhase = Phase.Hiding;
             Timer.StartTimer(HidingDuration);
