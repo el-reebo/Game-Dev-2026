@@ -13,9 +13,13 @@ public class GameOverScreen : MonoBehaviour
     private float StartTime;
     private float SurvivalTime = 0f;
 
+    private AudioSource AmbientSound;
+
     void Awake()
     {
         StartTime = Time.time;
+
+        AmbientSound = GetComponent<AudioSource>();
     }
 
     public void Setup()
@@ -33,6 +37,7 @@ public class GameOverScreen : MonoBehaviour
     {
         yield return new WaitForSeconds(2f);
         FadingScript.FadeOut(0.1f);
+        AmbientSound.enabled = false;
 
         // Show UI
         GameOverUI.SetActive(true);

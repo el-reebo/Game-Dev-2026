@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using TMPro;
 
 public enum Phase
 {
@@ -13,6 +14,8 @@ public class RoundHandler : MonoBehaviour
     [Header("References")]
     public MonsterAIController MainMonster;
     public ClockTimer Timer;
+    public GameWonScreen gameWonScreen;
+    public TMP_Text RoundMessage;
 
     [Header("Game Settings")]
     public int MonsterHealth = 3;
@@ -27,6 +30,7 @@ public class RoundHandler : MonoBehaviour
     public Phase CurrentPhase = Phase.Hiding;
 
     private FadingScript fadingScript;
+    private SpawnAmmo spawnAmmo;
 
     void Awake()
     {
@@ -35,6 +39,9 @@ public class RoundHandler : MonoBehaviour
         MainMonster.MonsterKilled += HandleMonsterKilled;
 
         fadingScript = GetComponent<FadingScript>();
+        spawnAmmo = GetComponent<SpawnAmmo>();
+
+        spawnAmmo.Spawn();
 
         fadingScript.FadeIn(1f);
 
@@ -43,6 +50,7 @@ public class RoundHandler : MonoBehaviour
             Debug.Log("Beginning hiding phase timer");
             CurrentPhase = Phase.Hiding;
             Timer.StartTimer(HidingDuration);
+            StartCoroutine(UpdateRoundMessage());
         }
         else
         {
@@ -65,7 +73,13 @@ public class RoundHandler : MonoBehaviour
 
     private void HandleMonsterKilled()
     {
-        Debug.Log("Yay you won");
+        gameWonScreen.Setup();
+    }
+
+    private IEnumerator EndGame()
+    {
+        yield return new WaitForSeconds(2f);
+
     }
 
     private void HandleMonsterDamage()
@@ -87,7 +101,6 @@ public class RoundHandler : MonoBehaviour
         // Case: hiding phase timer runs out
         if (CurrentPhase == Phase.Hiding)
         {
-            Debug.Log("HandlePhaseEnd (hiding) called");
             CurrentPhase = Phase.Seeking;
             MainMonster.LastSawPlayer = Time.time + TimeoutChaseDuration;
             MainMonster.EnterChase();
@@ -95,11 +108,14 @@ public class RoundHandler : MonoBehaviour
             Timer.StartTimer(SeekingDuration);
 
             StartCoroutine(BoostMonsterSpeed());
+            StartCoroutine(UpdateWarningMessage());
         }
         else
         {
             Debug.Log("HandlePhase End (seeking) called");
             Round ++;
+
+            spawnAmmo.Spawn();
 
             MainMonster.EnterHiding();
 
@@ -109,8 +125,43 @@ public class RoundHandler : MonoBehaviour
             Timer.StartTimer(HidingDuration);
 
             fadingScript.FadeIn(1f);
+
+            StartCoroutine(UpdateRoundMessage());
         }
     }
 
-    // if monster hurt during hiding phase, start seeking phase
+    private IEnumerator UpdateWarningMessage()
+    {
+        RoundMessage.text = "RUN";
+        RoundMessage.color = Color.red;
+        RoundMessage.gameObject.SetActive(true);
+
+        yield return new WaitForSeconds(2f);
+
+        RoundMessage.gameObject.SetActive(false);
+        RoundMessage.color = Color.white;
+    }
+
+    private IEnumerator UpdateRoundMessage()
+    {
+        yield return new WaitForSeconds(2f);
+        RoundMessage.gameObject.SetActive(true);
+        RoundMessage.text = $"Round {Round}";
+        
+        
+        if (MonsterHealth <= 1)
+        {
+            yield return new WaitForSeconds(2f);
+            RoundMessage.text = $"Kill Charlie";
+        }
+        else if (Round == 1)
+        {
+            yield return new WaitForSeconds(2f);
+            RoundMessage.text = $"Call out to Charlie";
+        }
+        
+        yield return new WaitForSeconds(2f);
+        RoundMessage.gameObject.SetActive(false);
+        
+    }
 }

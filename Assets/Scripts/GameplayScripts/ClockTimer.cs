@@ -1,20 +1,21 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using TMPro;
 
 // Code generated using Copilot "make a function for a clock timer
 // in unity that takes in the timer duration in minutes"
 public class ClockTimer : MonoBehaviour
 {
-    [SerializeField] private Text Timer;
+    [SerializeField] private TMP_Text Timer;
 
     public event System.Action TimerFinished;
-
+    
     private Coroutine TimerRoutine;
     
     void Awake()
     {
-        Timer = GetComponent<Text>();
+        Timer = GetComponent<TMP_Text>();
     }
 
     public void StartTimer(float minutes)

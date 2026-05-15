@@ -16,6 +16,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     public Transform Player;
     public CharacterController _playerController;
     public RoundHandler _roundHandler;
+    public AudioSource MonsterNoise;
 
     [Header("Current State")]
     public MonsterState State = MonsterState.Hiding;
@@ -46,7 +47,6 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     [SerializeField] private float InnerExclusion = 0f; // Percentage of inner radius you want excluded 
 
     [Header("Chase Settings")]
-    [SerializeField] private float ChaseTimeout = 5f;
     [SerializeField] private float AwakenChaseDuration = 10f;
 
     [Header("Hiding Settings")]
@@ -86,13 +86,9 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
 
     // Investigate variables
     private Vector3 InvestigateOrigin;
-    private bool ReachedOrigin = false;
 
     // Hiding variables
     private float AwakenTime = 0;
-
-    // Chase variables
-    private bool ChaseSearch = false;
 
     private void Awake()
     {
@@ -244,27 +240,34 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                 // Find valid jumpscare location that doesn't clip into wall
                 if (JumpscareLocation == Vector3.zero)
                 {
-                    NavMeshHit hit = default;
-                    int attempts = 0;
+                    //NavMeshHit hit = default;
+                    //int attempts = 0;
 
-                    while (attempts < 30)
-                    {
-                        Vector3 samplePos = transform.Find("JumpscarePoint").position;
-                        if (IsValidPatrolPoint(samplePos, out hit))
-                        {
-                            // Run jumpscare
-                            JumpscareLocation = samplePos;
-                            Debug.Log($"Monster jumpscare location: {JumpscareLocation}");
-                            Jumpscare?.Invoke();
-                            m_Animator.SetTrigger("JumpscareTrigger");
-                            break;
-                        }
-                        // Randomly rotate monster
-                        Vector3 randomDir = Random.onUnitSphere;
-                        randomDir.y = 0f;
-                        transform.rotation = Quaternion.LookRotation(randomDir);
-                        attempts++;
-                    }
+                    JumpscareLocation = transform.Find("JumpscarePoint").position;
+                    Debug.Log($"Monster jumpscare location: {JumpscareLocation}");
+                    Jumpscare?.Invoke();
+                    m_Animator.SetTrigger("JumpscareTrigger");
+
+                    MonsterNoise.enabled = false;
+
+                    //while (attempts < 30)
+                    //{
+                    //    Vector3 samplePos = transform.Find("JumpscarePoint").position;
+                    //    if (IsValidPatrolPoint(samplePos, out hit))
+                    //    {
+                    //        // Run jumpscare
+                    //        JumpscareLocation = samplePos;
+                    //        Debug.Log($"Monster jumpscare location: {JumpscareLocation}");
+                    //        Jumpscare?.Invoke();
+                    //        m_Animator.SetTrigger("JumpscareTrigger");
+                    //        break;
+                    //    }
+                    //    // Randomly rotate monster
+                    //    Vector3 randomDir = Random.onUnitSphere;
+                    //    randomDir.y = 0f;
+                    //    transform.rotation = Quaternion.LookRotation(randomDir);
+                    //    attempts++;
+                    //}
                     
                 }
             }
@@ -445,8 +448,6 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             return; 
         }
 
-
-
         if (InvestigateOrigin == Vector3.zero)
         {
             Debug.LogError("InvestigateOrigin is zero");
@@ -516,6 +517,8 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
     {
         m_Animator.SetBool("Hiding", false);
         State = MonsterState.Chasing;
+
+        MonsterNoise.enabled = true;
     }
 
     private void Chase()
@@ -600,6 +603,8 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         m_Animator.SetBool("Hiding", true);
 
         State = MonsterState.Hiding;
+
+        MonsterNoise.enabled = false;
     }
 
     private void Hide()
