@@ -102,7 +102,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         Target = targetObj.transform;
         Target.position = transform.position;
 
-        Debug.Log($"Monster Target created at: {Target.position}");
+        //Debug.Log($"Monster Target created at: {Target.position}");
 
         EnterHiding();
     }
@@ -128,14 +128,13 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             AwakenTime = Time.time + WakeUpDuration;
             LastSawPlayer = AwakenTime + AwakenChaseDuration;
             EnterChase();
-            Debug.Log("Took hiding damage");
+            //Debug.Log("Took hiding damage");
         }
         else 
         {
             if (Time.time > AwakenTime)
             {
                 // Stun Monster
-                Debug.Log("I have been shot");
                 m_Animator.SetTrigger("Damaged");
                 
                 // Cap stun duration to max stun
@@ -144,8 +143,8 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                     EndStunTime = Time.time + StunDuration;
                     LastStunTime = Time.time;
                 }
-                Debug.Log($"EndStunTime: {EndStunTime}");
-                Debug.Log($"IsStunned: {IsStunned}");
+                //Debug.Log($"EndStunTime: {EndStunTime}");
+                //Debug.Log($"IsStunned: {IsStunned}");
             }
         }
     }
@@ -186,7 +185,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
 
         if (IsStunned)
         {
-            Debug.Log("Monster is stunned");
+            //Debug.Log("Monster is stunned");
             m_Agent.speed = 0f;
             m_Agent.isStopped = true;
             m_Animator.SetFloat("Speed", 0f);
@@ -202,7 +201,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         {
             if (Vector3.Distance(m_Agent.transform.position, Target.position) < 0.5f)
             {
-                Debug.Log("Target reached");
+                //Debug.Log("Target reached");
                 ReachedTarget = true;
             }
         }
@@ -244,7 +243,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                     //int attempts = 0;
 
                     JumpscareLocation = transform.Find("JumpscarePoint").position;
-                    Debug.Log($"Monster jumpscare location: {JumpscareLocation}");
+                    //Debug.Log($"Monster jumpscare location: {JumpscareLocation}");
                     Jumpscare?.Invoke();
                     m_Animator.SetTrigger("JumpscareTrigger");
 
@@ -290,7 +289,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         if (sound.priority > TargetPriority && State != MonsterState.Hiding)
         {
             EnterInvestigate(sound.pos);
-            Debug.Log("Target to sound set");
+            //Debug.Log("Target to sound set");
         }
         
     }
@@ -435,7 +434,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
         SearchRadius = 3f;
         ReachedTarget = false;
         State = MonsterState.Investigating;
-        Debug.Log($"Investigate Origin: {InvestigateOrigin}");
+        //Debug.Log($"Investigate Origin: {InvestigateOrigin}");
     }
 
     private void Investigate()
@@ -462,16 +461,16 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
 
         m_Agent.speed = MonsterSpeed;
 
-        if (ReachedTarget)
+        if (ReachedTarget || (PatrolTargetTimeout < Time.time - LastPatrolTime))
         {
             // --- survey growing area around investigation origin ---
-            Debug.Log($"Surveying Area Around: {InvestigateOrigin}");
+            //Debug.Log($"Surveying Area Around: {InvestigateOrigin}");
 
             // Return back to patrol state
             if (SearchRadius > (MaxSearchRadius))
             {
                 EnterPatrol();
-                Debug.Log("Back to PATROL");
+                //Debug.Log("Back to PATROL");
                 return;
             }
 
@@ -491,7 +490,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
                 if (IsValidPatrolPoint(randomPoint, out hit))
                 {
                     validPointFound = true;
-                    Debug.Log("Investigation point set");
+                    //Debug.Log("Investigation point set");
                 }
                 attempts++;
             }
@@ -583,7 +582,7 @@ public class MonsterAIController : MonoBehaviour, IHear, IDamageable
             if (Vector3.Distance(p.position, Player.position) >= MinHideDistance)
             {
                 validPoints.Add(p);
-                Debug.Log($"Hiding point: {p.transform.name}");
+                //Debug.Log($"Hiding point: {p.transform.name}");
             }
         }
 

@@ -58,6 +58,11 @@ public class RoundHandler : MonoBehaviour
             CurrentPhase = Phase.Seeking;
             Timer.StartTimer(SeekingDuration);
         }
+
+        if (MonsterHealth == 1)
+        {
+            MainMonster.Killable = true;
+        }
     }
 
     private IEnumerator BoostMonsterSpeed()
@@ -65,9 +70,9 @@ public class RoundHandler : MonoBehaviour
         float OriginalSpeed = MainMonster.MonsterSpeed;
         MainMonster.MonsterSpeed = OriginalSpeed * BoostSpeedMultiplier;
 
-        Debug.Log("Boosting");
+        //Debug.Log("Boosting");
         yield return new WaitForSeconds(TimeoutChaseDuration);
-        Debug.Log("Done boosting");
+        //Debug.Log("Done boosting");
         MainMonster.MonsterSpeed = OriginalSpeed;
     }
 
@@ -84,7 +89,7 @@ public class RoundHandler : MonoBehaviour
 
     private void HandleMonsterDamage()
     {
-        Debug.Log($"HandleMonsterDamage called {MonsterHealth}");
+        //Debug.Log($"HandleMonsterDamage called {MonsterHealth}");
         MonsterHealth --;
         CurrentPhase = Phase.Seeking;
 
@@ -112,7 +117,7 @@ public class RoundHandler : MonoBehaviour
         }
         else
         {
-            Debug.Log("HandlePhase End (seeking) called");
+            //Debug.Log("HandlePhase End (seeking) called");
             Round ++;
 
             spawnAmmo.Spawn();
