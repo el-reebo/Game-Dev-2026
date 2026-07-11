@@ -1,8 +1,11 @@
 # Game Development Module Coursework: You're IT
 
-As part of my Game Development coursework, I created a survival-horror, first-person shooter game called 'You're IT'. A twist on the game of hide and seek where seeking it is the only way to end the nightmare. 
+### A YouTube video summary of the game
+<!-- <img width="876" height="520" alt="image" src="https://github.com/user-attachments/assets/3cb5faef-0b3f-445d-a049-897fcfc9e823" /> -->
+[![Watch the video](https://img.youtube.com/vi/3BnlPPB458U/hqdefault.jpg)](https://www.youtube.com/embed/3BnlPPB458U)
 
-<img width="876" height="520" alt="image" src="https://github.com/user-attachments/assets/3cb5faef-0b3f-445d-a049-897fcfc9e823" />
+
+As part of my Game Development coursework, I created a survival-horror, first-person shooter game called 'You're IT'. A twist on the game of hide and seek where seeking it is the only way to end the nightmare. 
 
 You play against Charlie. Of course Charlie isn't like other kids. He's 8 foot, got blades for hands and can hear anything including your microphone. 
 
